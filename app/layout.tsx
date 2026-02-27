@@ -17,8 +17,8 @@ export default function RootLayout({
   children: React.ReactNode
 }): React.JSX.Element {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.className} bg-zinc-950 text-zinc-100 antialiased`}>
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <body className={`${inter.className} bg-zinc-950 text-zinc-100 antialiased`} suppressHydrationWarning>
         <Sidebar />
         <main className="ml-60 min-h-screen">
           {children}
