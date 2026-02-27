@@ -1,9 +1,5 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
-  "framework": "nextjs",
-  "env": {
-    "ANTHROPIC_API_KEY": "@anthropic_api_key",
-    "FIRECRAWL_API_KEY": "@firecrawl_api_key"
-  }
+  "framework": "nextjs"
 }
