@@ -74,6 +74,33 @@ export default function ListsPage(): React.JSX.Element {
     URL.revokeObjectURL(url)
   }
 
+  function handleExportJSON(list: CompanyList): void {
+    const companies = list.companyIds
+      .map((id) => SEED_COMPANIES.find((c) => c.id === id))
+      .filter(Boolean) as Company[]
+
+    const data = companies.map((c) => ({
+      name: c.name,
+      domain: c.domain,
+      sector: c.sector,
+      stage: c.stage,
+      geography: c.geography,
+      totalRaised: c.totalRaised ?? null,
+      founders: c.founderNames,
+      headcount: c.headcount,
+      signals: c.signals,
+    }))
+
+    const json = JSON.stringify(data, null, 2)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${list.name.replace(/\s+/g, '-')}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const currentList = lists.find((l) => l.id === activeList)
   const currentCompanies = (currentList?.companyIds ?? [])
     .map((id) => SEED_COMPANIES.find((c) => c.id === id))
@@ -153,7 +180,16 @@ export default function ListsPage(): React.JSX.Element {
                       className="h-8 gap-1.5 border-zinc-700 bg-zinc-900 text-zinc-400 hover:text-zinc-100 text-xs"
                     >
                       <Download className="w-3.5 h-3.5" />
-                      Export CSV
+                      CSV
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleExportJSON(currentList)}
+                      className="h-8 gap-1.5 border-zinc-700 bg-zinc-900 text-zinc-400 hover:text-zinc-100 text-xs"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      JSON
                     </Button>
                     <Button
                       variant="ghost"

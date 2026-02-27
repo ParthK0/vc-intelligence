@@ -1,5 +1,92 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { EnrichmentPayload, DerivedSignal, SourceRecord } from '@/lib/types'
+import { EnrichmentPayload, DerivedSignal, SourceRecord, Company } from '@/lib/types'
+
+// Generate enrichment data from existing company data when scraping fails
+export function generateFallbackEnrichment(company: Company): EnrichmentPayload {
+  const enrichedAt = new Date().toISOString()
+
+  // Generate summary from company data
+  const summary = `${company.name} is a ${company.stage} ${company.sector} company based in ${company.geography}. ${company.tagline}`
+
+  // Generate "what they do" from signals and sector
+  const whatTheyDo: string[] = []
+  if (company.sector === 'FinTech') {
+    whatTheyDo.push('Develop financial technology solutions')
+  } else if (company.sector === 'HealthTech') {
+    whatTheyDo.push('Build healthcare technology products')
+  } else if (company.sector === 'Climate') {
+    whatTheyDo.push('Create climate and sustainability solutions')
+  } else if (company.sector === 'AI/ML') {
+    whatTheyDo.push('Develop artificial intelligence and machine learning products')
+  } else if (company.sector === 'SaaS') {
+    whatTheyDo.push('Provide software-as-a-service solutions')
+  } else if (company.sector === 'Consumer') {
+    whatTheyDo.push('Build consumer-facing products and services')
+  } else if (company.sector === 'Security') {
+    whatTheyDo.push('Develop security and data protection solutions')
+  } else if (company.sector === 'DevTools') {
+    whatTheyDo.push('Build developer tools and infrastructure')
+  } else if (company.sector === 'Infrastructure') {
+    whatTheyDo.push('Develop core infrastructure technology')
+  } else if (company.sector === 'Marketplace') {
+    whatTheyDo.push('Operate marketplace platforms')
+  } else if (company.sector === 'DeepTech') {
+    whatTheyDo.push('Develop advanced deep technology solutions')
+  } else {
+    whatTheyDo.push(`Operate in the ${company.sector} space`)
+  }
+
+  if (company.totalRaised) {
+    const raisedM = (company.totalRaised / 1_000_000).toFixed(1)
+    whatTheyDo.push(`Raised $${raisedM}M in funding to date`)
+  }
+
+  if (company.headcount) {
+    whatTheyDo.push(`Team size in the ${company.headcount} range`)
+  }
+
+  if (company.founderNames.length > 0) {
+    whatTheyDo.push(`Founded by ${company.founderNames.join(', ')}`)
+  }
+
+  // Generate keywords from sector and signals
+  const keywords: string[] = [
+    company.sector.toLowerCase(),
+    company.stage.toLowerCase(),
+    company.geography.toLowerCase(),
+  ]
+  
+  company.signals.forEach((signal) => {
+    if (signal.type === 'funding') keywords.push('funding', 'investors')
+    if (signal.type === 'hiring') keywords.push('hiring', 'careers')
+    if (signal.type === 'product') keywords.push('product', 'launch')
+    if (signal.type === 'partnership') keywords.push('partnership', 'collaboration')
+  })
+
+  // Generate derived signals from company signals
+  const derivedSignals: DerivedSignal[] = company.signals.slice(0, 3).map((signal) => ({
+    signal: signal.title,
+    confidence: 'medium' as const,
+    evidence: `Based on ${signal.type} signal from ${new Date(signal.timestamp).toLocaleDateString()}`,
+    sourceUrl: company.domain,
+  }))
+
+  return {
+    companyId: company.id,
+    status: 'partial',
+    summary,
+    whatTheyDo,
+    keywords: [...new Set(keywords)].slice(0, 10),
+    derivedSignals,
+    sources: [{
+      url: `https://${company.domain}`,
+      fetchedAt: enrichedAt,
+      statusCode: 0, // Indicates fallback data
+    }],
+    enrichedAt,
+    modelUsed: 'fallback-generator',
+  }
+}
 
 const SYSTEM_PROMPT = `You are a precise data extraction engine for a venture capital intelligence platform.
 

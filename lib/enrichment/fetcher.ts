@@ -11,7 +11,13 @@ export async function fetchPageContent(url: string): Promise<FetchResult | null>
   try {
     // Use Firecrawl API for reliable scraping
     const apiKey = process.env.FIRECRAWL_API_KEY
-    if (!apiKey) throw new Error('FIRECRAWL_API_KEY not set')
+    if (!apiKey) {
+      console.warn('FIRECRAWL_API_KEY not set - scraping will be skipped')
+      return null
+    }
+
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 15000) // 15s timeout
 
     const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
       method: 'POST',
@@ -23,10 +29,15 @@ export async function fetchPageContent(url: string): Promise<FetchResult | null>
         url,
         formats: ['markdown'],
         onlyMainContent: true,
+        timeout: 10000,
       }),
+      signal: controller.signal,
     })
 
+    clearTimeout(timeout)
+
     if (!response.ok) {
+      console.warn(`Firecrawl returned ${response.status} for ${url}`)
       return {
         content: '',
         source: {
@@ -40,6 +51,12 @@ export async function fetchPageContent(url: string): Promise<FetchResult | null>
     const data = await response.json() as {
       success: boolean
       data?: { markdown?: string; content?: string }
+      error?: string
+    }
+
+    if (!data.success) {
+      console.warn(`Firecrawl failed for ${url}: ${data.error}`)
+      return null
     }
 
     const content = data.data?.markdown ?? data.data?.content ?? ''
@@ -54,7 +71,11 @@ export async function fetchPageContent(url: string): Promise<FetchResult | null>
       },
     }
   } catch (err) {
-    console.error(`Fetch failed for ${url}:`, err)
+    if (err instanceof Error && err.name === 'AbortError') {
+      console.warn(`Timeout fetching ${url}`)
+    } else {
+      console.error(`Fetch failed for ${url}:`, err)
+    }
     return null
   }
 }

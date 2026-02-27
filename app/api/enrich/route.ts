@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { EnrichRequestSchema } from '@/lib/schemas/enrich.schema'
 import { getUrlsToScrape } from '@/lib/enrichment/url-router'
 import { fetchPageContent } from '@/lib/enrichment/fetcher'
-import { extractWithLLM } from '@/lib/enrichment/extractor'
+import { extractWithLLM, generateFallbackEnrichment } from '@/lib/enrichment/extractor'
 import { SourceRecord } from '@/lib/types'
+import { SEED_COMPANIES } from '@/lib/data/seed'
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
@@ -19,6 +20,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     const { companyId, domain, companyName } = parsed.data
 
+    // Find company for fallback data
+    const company = SEED_COMPANIES.find((c) => c.id === companyId)
+
     // Get URLs to scrape
     const urls = getUrlsToScrape(domain)
 
@@ -28,16 +32,31 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     let bestUrl = urls[0]
 
     for (const url of urls) {
-      const result = await fetchPageContent(url)
-      if (result) {
-        sources.push(result.source)
-        if (result.content.length > bestContent.length) {
-          bestContent = result.content
-          bestUrl = url
+      try {
+        const result = await fetchPageContent(url)
+        if (result) {
+          sources.push(result.source)
+          if (result.content.length > bestContent.length) {
+            bestContent = result.content
+            bestUrl = url
+          }
         }
+      } catch (fetchErr) {
+        console.error(`Failed to fetch ${url}:`, fetchErr)
       }
       // Stop if we have good content
       if (bestContent.length > 2000) break
+    }
+
+    // If no content could be scraped, generate fallback enrichment from company data
+    if (bestContent.length < 100 && company) {
+      const fallbackEnrichment = generateFallbackEnrichment(company)
+      return NextResponse.json({
+        success: true,
+        data: fallbackEnrichment,
+        cached: false,
+        source: 'fallback',
+      })
     }
 
     // Extract with LLM
@@ -57,7 +76,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   } catch (err) {
     console.error('Enrich API error:', err)
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { success: false, error: 'Enrichment failed — website may be unreachable' },
       { status: 500 }
     )
   }
