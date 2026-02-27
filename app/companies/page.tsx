@@ -30,6 +30,16 @@ import {
   TrendingUp,
 } from 'lucide-react'
 import Link from 'next/link'
+import {
+  PageTransition,
+  CollapsiblePanel,
+  StaggerList,
+  StaggerItem,
+  AnimatedScore,
+  motion,
+  AnimatePresence,
+  SkeletonPulse,
+} from '@/components/ui/motion'
 
 const ALL_SECTORS: SectorTag[] = [
   'AI/ML', 'DevTools', 'FinTech', 'HealthTech',
@@ -127,7 +137,7 @@ function CompaniesContent(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <PageTransition className="min-h-screen bg-zinc-950">
       <TopBar
         title="Companies"
         subtitle={`${total} companies · ${SCORED_COMPANIES.filter(c => (c.thesisScore?.total ?? 0) >= 75).length} strong matches`}
@@ -206,15 +216,25 @@ function CompaniesContent(): React.JSX.Element {
         </div>
 
         {/* Filter Panel */}
-        {showFilters && (
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-4">
+        <CollapsiblePanel isOpen={showFilters}>
+          <motion.div 
+            className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.1 }}
+          >
             <div>
               <p className="text-xs font-medium text-zinc-400 mb-2">Sector</p>
               <div className="flex flex-wrap gap-1.5">
-                {ALL_SECTORS.map((sector) => (
-                  <button
+                {ALL_SECTORS.map((sector, idx) => (
+                  <motion.button
                     key={sector}
                     onClick={() => toggleSector(sector)}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: idx * 0.02 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     className={cn(
                       'text-xs px-2.5 py-1 rounded-full border transition-all',
                       selectedSectors.includes(sector)
@@ -223,7 +243,7 @@ function CompaniesContent(): React.JSX.Element {
                     )}
                   >
                     {sector}
-                  </button>
+                  </motion.button>
                 ))}
               </div>
             </div>
@@ -231,10 +251,15 @@ function CompaniesContent(): React.JSX.Element {
             <div>
               <p className="text-xs font-medium text-zinc-400 mb-2">Stage</p>
               <div className="flex flex-wrap gap-1.5">
-                {ALL_STAGES.map((stage) => (
-                  <button
+                {ALL_STAGES.map((stage, idx) => (
+                  <motion.button
                     key={stage}
                     onClick={() => toggleStage(stage)}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: idx * 0.02 + 0.1 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     className={cn(
                       'text-xs px-2.5 py-1 rounded-full border transition-all',
                       selectedStages.includes(stage)
@@ -243,7 +268,7 @@ function CompaniesContent(): React.JSX.Element {
                     )}
                   >
                     {stage}
-                  </button>
+                  </motion.button>
                 ))}
               </div>
             </div>
@@ -262,8 +287,8 @@ function CompaniesContent(): React.JSX.Element {
                 className="w-48 accent-violet-500"
               />
             </div>
-          </div>
-        )}
+          </motion.div>
+        </CollapsiblePanel>
 
         {/* Results Table */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
@@ -298,7 +323,12 @@ function CompaniesContent(): React.JSX.Element {
           </div>
 
           {items.length === 0 ? (
-            <div className="py-16 text-center">
+            <motion.div 
+              className="py-16 text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
               <p className="text-zinc-500 text-sm">No companies match your filters</p>
               <button
                 onClick={clearFilters}
@@ -306,103 +336,116 @@ function CompaniesContent(): React.JSX.Element {
               >
                 Clear filters
               </button>
-            </div>
+            </motion.div>
           ) : (
-            items.map((company: Company) => (
-              <Link
-                key={company.id}
-                href={`/companies/${company.id}`}
-                className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-zinc-800/60 hover:bg-zinc-800/40 transition-colors group"
-              >
-                <div className="col-span-3 flex items-center gap-3 min-w-0">
-                  <div className="w-7 h-7 rounded-md bg-zinc-800 border border-zinc-700 flex items-center justify-center flex-shrink-0">
-                    <span className="text-[10px] font-bold text-zinc-400">
-                      {company.name.slice(0, 2).toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-zinc-200 group-hover:text-white truncate">
-                      {company.name}
-                    </p>
-                    <p className="text-[10px] text-zinc-500 truncate">
-                      {company.domain}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="col-span-1 flex items-center">
-                  <Badge
-                    variant="secondary"
-                    className="text-[10px] bg-zinc-800 text-zinc-400 border-0 px-1.5"
+            <StaggerList>
+              {items.map((company: Company, idx: number) => (
+                <StaggerItem key={company.id}>
+                  <motion.div
+                    whileHover={{ 
+                      backgroundColor: 'rgba(39, 39, 42, 0.6)',
+                      transition: { duration: 0.15 }
+                    }}
+                    whileTap={{ scale: 0.995 }}
                   >
-                    {company.stage}
-                  </Badge>
-                </div>
+                    <Link
+                      href={`/companies/${company.id}`}
+                      className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-zinc-800/60 transition-colors group"
+                    >
+                      <div className="col-span-3 flex items-center gap-3 min-w-0">
+                        <motion.div 
+                          className="w-7 h-7 rounded-md bg-zinc-800 border border-zinc-700 flex items-center justify-center flex-shrink-0"
+                          whileHover={{ scale: 1.1, borderColor: 'rgb(139, 92, 246)' }}
+                          transition={{ duration: 0.15 }}
+                        >
+                          <span className="text-[10px] font-bold text-zinc-400">
+                            {company.name.slice(0, 2).toUpperCase()}
+                          </span>
+                        </motion.div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-zinc-200 group-hover:text-white truncate">
+                            {company.name}
+                          </p>
+                          <p className="text-[10px] text-zinc-500 truncate">
+                            {company.domain}
+                          </p>
+                        </div>
+                      </div>
 
-                <div className="col-span-2 flex items-center">
-                  <span className="text-xs text-zinc-400">{company.sector}</span>
-                </div>
+                      <div className="col-span-1 flex items-center">
+                        <Badge
+                          variant="secondary"
+                          className="text-[10px] bg-zinc-800 text-zinc-400 border-0 px-1.5"
+                        >
+                          {company.stage}
+                        </Badge>
+                      </div>
 
-                <div className="col-span-2 flex items-center">
-                  <span className="text-xs text-zinc-400">
-                    {formatFunding(company.totalRaised)}
-                  </span>
-                </div>
+                      <div className="col-span-2 flex items-center">
+                        <span className="text-xs text-zinc-400">{company.sector}</span>
+                      </div>
 
-                <div className="col-span-1 flex items-center gap-1">
-                  <TrendingUp className="w-3 h-3 text-zinc-600" />
-                  <span className="text-xs text-zinc-400">
-                    {company.signals.length}
-                  </span>
-                  {company.signals.some((s) => s.isNew) && (
-                    <span className="w-1.5 h-1.5 bg-violet-500 rounded-full" />
-                  )}
-                </div>
+                      <div className="col-span-2 flex items-center">
+                        <span className="text-xs text-zinc-400">
+                          {formatFunding(company.totalRaised)}
+                        </span>
+                      </div>
 
-                <div className="col-span-2 flex items-center">
-                  <div className="w-full">
-                    <div className="flex items-center justify-between mb-1">
-                      <span
-                        className={cn(
-                          'text-xs font-bold px-1.5 py-0.5 rounded',
-                          scoreColor(company.thesisScore?.total ?? 0)
+                      <div className="col-span-1 flex items-center gap-1">
+                        <TrendingUp className="w-3 h-3 text-zinc-600" />
+                        <span className="text-xs text-zinc-400">
+                          {company.signals.length}
+                        </span>
+                        {company.signals.some((s) => s.isNew) && (
+                          <motion.span 
+                            className="w-1.5 h-1.5 bg-violet-500 rounded-full"
+                            animate={{ scale: [1, 1.3, 1], opacity: [1, 0.7, 1] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                          />
                         )}
-                      >
-                        {company.thesisScore?.total ?? 0}
-                      </span>
-                      <span className="text-[10px] text-zinc-600">
-                        {company.thesisScore?.grade}
-                      </span>
-                    </div>
-                    <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
-                      <div
-                        className={cn(
-                          'h-full rounded-full transition-all',
-                          (company.thesisScore?.total ?? 0) >= 75
-                            ? 'bg-emerald-500'
-                            : (company.thesisScore?.total ?? 0) >= 55
-                            ? 'bg-amber-500'
-                            : 'bg-zinc-600'
-                        )}
-                        style={{ width: `${company.thesisScore?.total ?? 0}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
+                      </div>
 
-                <div className="col-span-1 flex items-center">
-                  <span className="text-[10px] text-violet-400 group-hover:text-violet-300 opacity-0 group-hover:opacity-100 transition-opacity">
-                    View →
-                  </span>
-                </div>
-              </Link>
-            ))
+                      <div className="col-span-2 flex items-center">
+                        <div className="flex items-center gap-2">
+                          <AnimatedScore 
+                            score={company.thesisScore?.total ?? 0} 
+                            size="sm"
+                            showLabel={true}
+                          />
+                          <div className="text-right">
+                            <span className="text-[10px] text-zinc-500 block">
+                              {company.thesisScore?.grade}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="col-span-1 flex items-center">
+                        <motion.span 
+                          className="text-[10px] text-violet-400 group-hover:text-violet-300"
+                          initial={{ opacity: 0, x: -5 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          View →
+                        </motion.span>
+                      </div>
+                    </Link>
+                  </motion.div>
+                </StaggerItem>
+              ))}
+            </StaggerList>
           )}
         </div>
 
         {/* Pagination */}
         {pages > 1 && (
-          <div className="flex items-center justify-between">
+          <motion.div 
+            className="flex items-center justify-between"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
             <p className="text-xs text-zinc-500">
               Showing {((page - 1) * PAGE_LIMIT) + 1}–{Math.min(page * PAGE_LIMIT, total)} of {total}
             </p>
@@ -416,22 +459,35 @@ function CompaniesContent(): React.JSX.Element {
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
               </Button>
-              {Array.from({ length: pages }, (_, i) => i + 1).map((p) => (
-                <Button
-                  key={p}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(p)}
-                  className={cn(
-                    'h-7 w-7 p-0 text-xs border-zinc-700 bg-zinc-900',
-                    p === page
-                      ? 'border-violet-500/50 text-violet-400 bg-violet-600/10'
-                      : 'text-zinc-400 hover:bg-zinc-800'
-                  )}
-                >
-                  {p}
-                </Button>
-              ))}
+              {Array.from({ length: Math.min(pages, 7) }, (_, i) => {
+                let p: number
+                if (pages <= 7) {
+                  p = i + 1
+                } else if (page <= 4) {
+                  p = i + 1
+                } else if (page >= pages - 3) {
+                  p = pages - 6 + i
+                } else {
+                  p = page - 3 + i
+                }
+                return (
+                  <motion.div key={p} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(p)}
+                      className={cn(
+                        'h-7 w-7 p-0 text-xs border-zinc-700 bg-zinc-900',
+                        p === page
+                          ? 'border-violet-500/50 text-violet-400 bg-violet-600/10'
+                          : 'text-zinc-400 hover:bg-zinc-800'
+                      )}
+                    >
+                      {p}
+                    </Button>
+                  </motion.div>
+                )
+              })}
               <Button
                 variant="outline"
                 size="sm"
@@ -442,10 +498,10 @@ function CompaniesContent(): React.JSX.Element {
                 <ChevronRight className="w-3.5 h-3.5" />
               </Button>
             </div>
-          </div>
+          </motion.div>
         )}
       </div>
-    </div>
+    </PageTransition>
   )
 }
 
@@ -454,10 +510,40 @@ export default function CompaniesPage(): React.JSX.Element {
     <Suspense fallback={
       <div className="min-h-screen bg-zinc-950">
         <TopBar title="Companies" subtitle="Loading..." />
-        <div className="p-6">
-          <div className="animate-pulse space-y-4">
-            <div className="h-9 bg-zinc-800 rounded-lg w-96" />
-            <div className="h-64 bg-zinc-800 rounded-xl" />
+        <div className="p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <SkeletonPulse className="h-9 w-96" />
+            <SkeletonPulse className="h-9 w-24" />
+          </div>
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+            <div className="h-10 border-b border-zinc-800 bg-zinc-900/50" />
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-zinc-800/60">
+                <div className="col-span-3 flex items-center gap-3">
+                  <SkeletonPulse className="w-7 h-7 rounded-md" />
+                  <div className="space-y-1.5">
+                    <SkeletonPulse className="h-3 w-24" />
+                    <SkeletonPulse className="h-2 w-16" />
+                  </div>
+                </div>
+                <div className="col-span-1 flex items-center">
+                  <SkeletonPulse className="h-5 w-12 rounded-full" />
+                </div>
+                <div className="col-span-2 flex items-center">
+                  <SkeletonPulse className="h-3 w-16" />
+                </div>
+                <div className="col-span-2 flex items-center">
+                  <SkeletonPulse className="h-3 w-14" />
+                </div>
+                <div className="col-span-1 flex items-center">
+                  <SkeletonPulse className="h-3 w-8" />
+                </div>
+                <div className="col-span-2 flex items-center">
+                  <SkeletonPulse className="h-10 w-10 rounded-full" />
+                </div>
+                <div className="col-span-1" />
+              </div>
+            ))}
           </div>
         </div>
       </div>

@@ -36,6 +36,16 @@ import {
   ChevronUp,
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import {
+  PageTransition,
+  AnimatedScore,
+  motion,
+  SlideUp,
+  FadeIn,
+  StaggerList,
+  StaggerItem,
+  LoadingSpinner,
+} from '@/components/ui/motion'
 
 export default function CompanyProfilePage(): React.JSX.Element {
   const params = useParams()
@@ -192,62 +202,73 @@ export default function CompanyProfilePage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <PageTransition className="min-h-screen bg-zinc-950">
       <TopBar title={company.name} subtitle={company.tagline} />
 
       <div className="p-6 max-w-5xl">
 
         {/* Back */}
-        <button
+        <motion.button
           onClick={() => router.push('/companies')}
           className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 mb-5 transition-colors"
+          whileHover={{ x: -3 }}
+          transition={{ duration: 0.15 }}
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           Back to Companies
-        </button>
+        </motion.button>
 
         {/* Header */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 mb-4">
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center flex-shrink-0">
-                <span className="text-sm font-bold text-zinc-300">
-                  {company.name.slice(0, 2).toUpperCase()}
-                </span>
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-lg font-bold text-zinc-100">{company.name}</h1>
-                  {score && (
-                    <span className={cn(
-                      'text-xs font-bold px-2 py-0.5 rounded-lg',
-                      scoreBg(score.total),
-                      scoreColor(score.total)
-                    )}>
-                      {score.total} · {score.grade}
-                    </span>
-                  )}
-                </div>
-                <p className="text-sm text-zinc-400 mt-0.5">{company.tagline}</p>
-                <div className="flex items-center gap-2 mt-2">
-                  <Badge variant="secondary" className="text-[10px] bg-zinc-800 text-zinc-400 border-0">
-                    {company.stage}
-                  </Badge>
-                  <Badge variant="secondary" className="text-[10px] bg-zinc-800 text-zinc-400 border-0">
-                    {company.sector}
-                  </Badge>
-                  <Badge variant="secondary" className="text-[10px] bg-zinc-800 text-zinc-400 border-0">
-                    {company.geography}
-                  </Badge>
-                  <span className="text-[10px] text-zinc-600">
-                    Founded {company.foundedYear}
+        <SlideUp>
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 mb-4">
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-4">
+                <motion.div 
+                  className="w-12 h-12 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center flex-shrink-0"
+                  whileHover={{ scale: 1.05, borderColor: 'rgb(139, 92, 246)' }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <span className="text-sm font-bold text-zinc-300">
+                    {company.name.slice(0, 2).toUpperCase()}
                   </span>
+                </motion.div>
+                <div>
+                  <div className="flex items-center gap-3">
+                    <h1 className="text-lg font-bold text-zinc-100">{company.name}</h1>
+                    {score && (
+                      <AnimatedScore 
+                        score={score.total} 
+                        size="md" 
+                        showLabel={true}
+                      />
+                    )}
+                  </div>
+                  <p className="text-sm text-zinc-400 mt-0.5">{company.tagline}</p>
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    <motion.div whileHover={{ scale: 1.05 }}>
+                      <Badge variant="secondary" className="text-[10px] bg-zinc-800 text-zinc-400 border-0">
+                        {company.stage}
+                      </Badge>
+                    </motion.div>
+                    <motion.div whileHover={{ scale: 1.05 }}>
+                      <Badge variant="secondary" className="text-[10px] bg-zinc-800 text-zinc-400 border-0">
+                        {company.sector}
+                      </Badge>
+                    </motion.div>
+                    <motion.div whileHover={{ scale: 1.05 }}>
+                      <Badge variant="secondary" className="text-[10px] bg-zinc-800 text-zinc-400 border-0">
+                        {company.geography}
+                      </Badge>
+                    </motion.div>
+                    <span className="text-[10px] text-zinc-600">
+                      Founded {company.foundedYear}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Actions */}
-            <div className="flex items-center gap-2 flex-shrink-0">
+              {/* Actions */}
+              <div className="flex items-center gap-2 flex-shrink-0">
               <a
                 href={`https://${company.domain}`}
                 target="_blank"
@@ -355,6 +376,7 @@ export default function CompanyProfilePage(): React.JSX.Element {
             </div>
           </div>
         </div>
+        </SlideUp>
 
         {/* Tabs */}
         <div className="flex items-center gap-1 mb-4 bg-zinc-900 border border-zinc-800 rounded-lg p-1 w-fit">
@@ -809,6 +831,6 @@ export default function CompanyProfilePage(): React.JSX.Element {
           </div>
         )}
       </div>
-    </div>
+    </PageTransition>
   )
 }

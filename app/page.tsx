@@ -1,4 +1,6 @@
 // app/page.tsx
+'use client'
+
 import React from 'react'
 import { TopBar } from '@/components/layout/TopBar'
 import { scoreAllCompanies } from '@/lib/scoring/engine'
@@ -11,6 +13,14 @@ import {
   BookMarked,
 } from 'lucide-react'
 import Link from 'next/link'
+import {
+  PageTransition,
+  StaggerList,
+  StaggerItem,
+  AnimatedScore,
+  motion,
+  PulseBadge,
+} from '@/components/ui/motion'
 
 export default function DashboardPage(): React.JSX.Element {
   const scored = scoreAllCompanies(SEED_COMPANIES, DEFAULT_THESIS)
@@ -67,7 +77,7 @@ export default function DashboardPage(): React.JSX.Element {
   ]
 
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <PageTransition className="min-h-screen bg-zinc-950">
       <TopBar
         title="Dashboard"
         subtitle="Apex Ventures · Seed AI/ML Fund"
@@ -76,34 +86,46 @@ export default function DashboardPage(): React.JSX.Element {
       <div className="p-6 space-y-6">
 
         {/* Stats row */}
-        <div className="grid grid-cols-4 gap-4">
-          {stats.map((stat) => {
+        <StaggerList className="grid grid-cols-4 gap-4">
+          {stats.map((stat, idx) => {
             const Icon = stat.icon
             return (
-              <div
-                key={stat.label}
-                className="bg-zinc-900 border border-zinc-800 rounded-xl p-4"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs text-zinc-500 font-medium">
-                      {stat.label}
-                    </p>
-                    <p className="text-2xl font-bold text-zinc-100 mt-1">
-                      {stat.value}
-                    </p>
-                    <p className="text-[11px] text-zinc-600 mt-0.5">
-                      {stat.sub}
-                    </p>
+              <StaggerItem key={stat.label}>
+                <motion.div
+                  className="bg-zinc-900 border border-zinc-800 rounded-xl p-4"
+                  whileHover={{ scale: 1.02, borderColor: 'rgba(139, 92, 246, 0.3)' }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-xs text-zinc-500 font-medium">
+                        {stat.label}
+                      </p>
+                      <motion.p 
+                        className="text-2xl font-bold text-zinc-100 mt-1"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 + idx * 0.1 }}
+                      >
+                        {stat.value}
+                      </motion.p>
+                      <p className="text-[11px] text-zinc-600 mt-0.5">
+                        {stat.sub}
+                      </p>
+                    </div>
+                    <motion.div 
+                      className={`${stat.bg} p-2 rounded-lg`}
+                      whileHover={{ rotate: 5, scale: 1.1 }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      <Icon className={`w-4 h-4 ${stat.color}`} />
+                    </motion.div>
                   </div>
-                  <div className={`${stat.bg} p-2 rounded-lg`}>
-                    <Icon className={`w-4 h-4 ${stat.color}`} />
-                  </div>
-                </div>
-              </div>
+                </motion.div>
+              </StaggerItem>
             )
           })}
-        </div>
+        </StaggerList>
 
         <div className="grid grid-cols-2 gap-4">
 
@@ -207,7 +229,12 @@ export default function DashboardPage(): React.JSX.Element {
         </div>
 
         {/* Recently added */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+        <motion.div 
+          className="bg-zinc-900 border border-zinc-800 rounded-xl p-5"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-zinc-100">
               Recently Added
@@ -220,28 +247,35 @@ export default function DashboardPage(): React.JSX.Element {
             </Link>
           </div>
           <div className="grid grid-cols-5 gap-3">
-            {recentCompanies.map((company) => (
-              <Link
+            {recentCompanies.map((company, idx) => (
+              <motion.div
                 key={company.id}
-                href={`/companies/${company.id}`}
-                className="p-3 rounded-lg border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/40 transition-all group"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.5 + idx * 0.05 }}
+                whileHover={{ scale: 1.03, y: -2 }}
               >
-                <div className="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center mb-2">
-                  <span className="text-[11px] font-bold text-zinc-400">
-                    {company.name.slice(0, 2).toUpperCase()}
-                  </span>
-                </div>
-                <p className="text-xs font-medium text-zinc-200 group-hover:text-white truncate transition-colors">
-                  {company.name}
-                </p>
-                <p className="text-[10px] text-zinc-500 mt-0.5 truncate">
-                  {company.stage} · {company.sector}
-                </p>
-              </Link>
+                <Link
+                  href={`/companies/${company.id}`}
+                  className="block p-3 rounded-lg border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/40 transition-all group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center mb-2">
+                    <span className="text-[11px] font-bold text-zinc-400">
+                      {company.name.slice(0, 2).toUpperCase()}
+                    </span>
+                  </div>
+                  <p className="text-xs font-medium text-zinc-200 group-hover:text-white truncate transition-colors">
+                    {company.name}
+                  </p>
+                  <p className="text-[10px] text-zinc-500 mt-0.5 truncate">
+                    {company.stage} · {company.sector}
+                  </p>
+                </Link>
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </PageTransition>
   )
 }
