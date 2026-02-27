@@ -1,7 +1,8 @@
 // lib/data/seed.ts
 import { Company } from '@/lib/types'
+import { GENERATED_COMPANIES } from './generator'
 
-export const SEED_COMPANIES: Company[] = [
+const CURATED_COMPANIES: Company[] = [
   {
     id: 'comp_001',
     name: 'Meridian AI',
@@ -1027,4 +1028,10 @@ export const SEED_COMPANIES: Company[] = [
     addedAt: '2025-01-12T08:00:00Z',
     updatedAt: '2025-01-12T08:00:00Z',
   },
+]
+
+// Combined export: 25 curated + 475 generated = 500 total
+export const SEED_COMPANIES: Company[] = [
+  ...CURATED_COMPANIES,
+  ...GENERATED_COMPANIES.slice(0, 475) // Take 475 to reach 500 total
 ]
