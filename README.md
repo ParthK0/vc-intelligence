@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Scout — VC Intelligence Platform
 
-## Getting Started
+A precision AI sourcing tool for early-stage venture capital funds.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Discovery** — Search + filter 25 companies by sector, stage, geography, thesis score
+- **Thesis Scoring** — Deterministic, explainable 5-dimension scoring engine
+- **Live Enrichment** — Real website scraping via Firecrawl + Claude extraction
+- **Signal Feed** — Timestamped, confidence-rated signal timeline per company
+- **Lists** — Save companies to lists, export as CSV
+- **Saved Searches** — Persist and re-run filter combinations
+
+## Setup
+
+1. Clone the repo
+2. Install dependencies: `npm install`
+3. Copy `.env.example` to `.env.local`
+4. Add your API keys to `.env.local`
+5. Run: `npm run dev`
+
+## Environment Variables
+
+```
+ANTHROPIC_API_KEY=     # From console.anthropic.com
+FIRECRAWL_API_KEY=     # From firecrawl.dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Architecture
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **UI Layer**: Next.js 14 App Router, Tailwind, shadcn/ui
+- **Intelligence Layer**: `/lib/scoring/`, `/lib/enrichment/`, `/lib/search/`
+- **API Layer**: `/app/api/enrich/` — server-side only, keys never exposed
+- **Storage**: localStorage (MVP) → Postgres + Redis (V2)
+- **Search**: Fuse.js fuzzy search (MVP) → Typesense (V3)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Enrichment Pipeline
 
-## Learn More
+```
+User clicks Enrich
+→ POST /api/enrich (server-side)
+→ Firecrawl fetches public pages
+→ Claude extracts structured fields
+→ Returns summary, bullets, keywords, signals, sources
+→ Cached in localStorage for 24hrs
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Scoring Engine
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Five weighted dimensions per fund thesis:
+- Sector Fit (30%)
+- Stage Fit (25%)
+- Traction Signals (20%)
+- Geography Fit (15%)
+- Team Quality (10%)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Every score includes dimension breakdown + evidence + explanation paragraph.
 
-## Deploy on Vercel
+## Deploy
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Set env vars in Vercel dashboard. Do not commit `.env.local`.
