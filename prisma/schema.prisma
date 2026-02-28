@@ -1,0 +1,196 @@
+// prisma/schema.prisma
+// Database schema — ready for Neon Postgres when connected
+// Run: npx prisma generate && npx prisma db push
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         String   @default("analyst") // admin, analyst, partner
+  avatarUrl    String?
+  fundId       String
+  fund         Fund     @relation(fields: [fundId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  notes       Note[]
+  auditLogs   AuditLog[]
+}
+
+model Fund {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users            User[]
+  companies        FundCompany[]
+  thesisConfig     ThesisConfig?
+  pipeline         PipelineEntry[]
+  portfolioEntries Portfolio[]
+  savedSearches    SavedSearch[]
+  companyLists     CompanyList[]
+  dataRoomItems    DataRoomItem[]
+  enrichmentJobs   EnrichmentJob[]
+  scoreHistories   ScoreHistory[]
+  feedSources      FeedSource[]
+  weightAdjustments WeightAdjustment[]
+}
+
+model FundCompany {
+  id        String   @id @default(cuid())
+  fundId    String
+  fund      Fund     @relation(fields: [fundId], references: [id])
+  companyId String   // references seed company ID
+  addedAt   DateTime @default(now())
+
+  @@unique([fundId, companyId])
+}
+
+model ThesisConfig {
+  id          String   @id @default(cuid())
+  fundId      String   @unique
+  fund        Fund     @relation(fields: [fundId], references: [id])
+  configJson  Json     // stores the full ThesisConfig object
+  version     String   @default("1.0")
+  updatedAt   DateTime @updatedAt
+}
+
+model PipelineEntry {
+  id        String   @id @default(cuid())
+  fundId    String
+  fund      Fund     @relation(fields: [fundId], references: [id])
+  companyId String
+  stage     String   // sourced, intro, partner_review, ic, invested, passed
+  movedAt   DateTime @default(now())
+
+  @@unique([fundId, companyId])
+}
+
+model Portfolio {
+  id        String   @id @default(cuid())
+  fundId    String
+  fund      Fund     @relation(fields: [fundId], references: [id])
+  companyId String
+  addedAt   DateTime @default(now())
+
+  @@unique([fundId, companyId])
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  content   String
+  companyId String
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  action     String
+  entityType String
+  entityId   String
+  entityName String?
+  details    String
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  fundId     String
+  timestamp  DateTime @default(now())
+}
+
+model CompanyList {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  color       String?
+  fundId      String
+  fund        Fund     @relation(fields: [fundId], references: [id])
+  companyIds  Json     @default("[]") // string[] stored as JSON
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SavedSearch {
+  id          String   @id @default(cuid())
+  name        String
+  filtersJson Json
+  resultIds   Json     @default("[]")
+  resultCount Int      @default(0)
+  fundId      String
+  fund        Fund     @relation(fields: [fundId], references: [id])
+  lastRunAt   DateTime @default(now())
+  createdAt   DateTime @default(now())
+}
+
+model EnrichmentJob {
+  id        String   @id @default(cuid())
+  companyId String
+  fundId    String
+  fund      Fund     @relation(fields: [fundId], references: [id])
+  status    String   @default("pending") // pending, processing, complete, failed
+  resultJson Json?
+  createdAt DateTime @default(now())
+  completedAt DateTime?
+}
+
+model ScoreHistory {
+  id         String   @id @default(cuid())
+  companyId  String
+  fundId     String
+  fund       Fund     @relation(fields: [fundId], references: [id])
+  score      Float
+  dimensions Json     // Record<string, number>
+  scoredAt   DateTime @default(now())
+}
+
+model DataRoomItem {
+  id           String   @id @default(cuid())
+  companyId    String
+  fundId       String
+  fund         Fund     @relation(fields: [fundId], references: [id])
+  label        String
+  category     String
+  completed    Boolean  @default(false)
+  completedAt  DateTime?
+  note         String?
+  requiredFor  String   @default("any")
+  createdAt    DateTime @default(now())
+}
+
+model FeedSource {
+  id           String   @id @default(cuid())
+  name         String
+  type         String   // rss, github, jobs
+  url          String
+  companyId    String
+  fundId       String
+  fund         Fund     @relation(fields: [fundId], references: [id])
+  enabled      Boolean  @default(true)
+  lastChecked  DateTime?
+  createdAt    DateTime @default(now())
+}
+
+model WeightAdjustment {
+  id            String   @id @default(cuid())
+  fundId        String
+  fund          Fund     @relation(fields: [fundId], references: [id])
+  dimensionKey  String
+  adjustment    Float
+  reason        String
+  createdAt     DateTime @default(now())
+
+  @@unique([fundId, dimensionKey])
+}

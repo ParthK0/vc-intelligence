@@ -7,6 +7,7 @@ import { scoreAllCompanies } from '@/lib/scoring/engine'
 import { SEED_COMPANIES } from '@/lib/data/seed'
 import { DEFAULT_THESIS } from '@/lib/data/thesis-default'
 import { buildHeatmapData, buildSignalTimeline, ALL_STAGES } from '@/lib/data/heatmap'
+import { calculateFundMetrics } from '@/lib/data/metrics'
 import {
   Building2,
   TrendingUp,
@@ -46,6 +47,7 @@ export default function DashboardPage(): React.JSX.Element {
 
   // Unique sectors from heatmap
   const heatmapSectors = [...new Set(heatmapData.map(c => c.sector))]
+  const fundMetrics = calculateFundMetrics(scored)
 
   const stats = [
     {
@@ -195,10 +197,10 @@ export default function DashboardPage(): React.JSX.Element {
                   <div className="flex items-center gap-2">
                     <div
                       className={`text-xs font-bold px-2 py-0.5 rounded-md ${(company.thesisScore?.total ?? 0) >= 75
-                          ? 'bg-emerald-600/20 text-emerald-400'
-                          : (company.thesisScore?.total ?? 0) >= 55
-                            ? 'bg-amber-600/20 text-amber-400'
-                            : 'bg-zinc-800 text-zinc-400'
+                        ? 'bg-emerald-600/20 text-emerald-400'
+                        : (company.thesisScore?.total ?? 0) >= 55
+                          ? 'bg-amber-600/20 text-amber-400'
+                          : 'bg-zinc-800 text-zinc-400'
                         }`}
                     >
                       {company.thesisScore?.total ?? 0}
@@ -231,10 +233,10 @@ export default function DashboardPage(): React.JSX.Element {
                   >
                     <div
                       className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${signal.confidence === 'high'
-                          ? 'bg-emerald-400'
-                          : signal.confidence === 'medium'
-                            ? 'bg-amber-400'
-                            : 'bg-zinc-500'
+                        ? 'bg-emerald-400'
+                        : signal.confidence === 'medium'
+                          ? 'bg-amber-400'
+                          : 'bg-zinc-500'
                         }`}
                     />
                     <div className="min-w-0">
@@ -402,6 +404,90 @@ export default function DashboardPage(): React.JSX.Element {
                 </Link>
               </motion.div>
             ))}
+          </div>
+        </motion.div>
+
+        {/* Fund Metrics */}
+        <motion.div
+          className="bg-zinc-900 border border-zinc-800 rounded-xl p-5"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Shield className="w-4 h-4 text-violet-400" />
+              <h2 className="text-sm font-semibold text-zinc-100">
+                Fund Metrics
+              </h2>
+            </div>
+          </div>
+          <div className="grid grid-cols-4 gap-4">
+            <div className="bg-zinc-800/50 rounded-lg p-3">
+              <p className="text-[10px] text-zinc-500">Deal Flow</p>
+              <div className="flex items-baseline gap-1">
+                <p className="text-lg font-bold text-zinc-100">{fundMetrics.dealFlowThisWeek}</p>
+                <span className="text-[10px] text-zinc-500">/week</span>
+              </div>
+              {fundMetrics.dealFlowDelta !== 0 && (
+                <p className={cn('text-[10px]',
+                  fundMetrics.dealFlowDelta > 0 ? 'text-emerald-400' : 'text-red-400'
+                )}>
+                  {fundMetrics.dealFlowDelta > 0 ? '↑' : '↓'} {Math.abs(fundMetrics.dealFlowDelta)} vs last week
+                </p>
+              )}
+            </div>
+            <div className="bg-zinc-800/50 rounded-lg p-3">
+              <p className="text-[10px] text-zinc-500">Pipeline</p>
+              <p className="text-lg font-bold text-zinc-100">{fundMetrics.totalInPipeline}</p>
+              <p className="text-[10px] text-zinc-500">companies tracked</p>
+            </div>
+            <div className="bg-zinc-800/50 rounded-lg p-3">
+              <p className="text-[10px] text-zinc-500">Avg Score</p>
+              <p className="text-lg font-bold text-zinc-100">{fundMetrics.avgThesisScore}</p>
+              <p className="text-[10px] text-zinc-500">thesis alignment</p>
+            </div>
+            <div className="bg-zinc-800/50 rounded-lg p-3">
+              <p className="text-[10px] text-zinc-500">Funnel Rate</p>
+              <p className="text-lg font-bold text-zinc-100">{fundMetrics.conversionRates.overallFunnel}%</p>
+              <p className="text-[10px] text-zinc-500">sourced → invested</p>
+            </div>
+          </div>
+
+          {/* Conversion Funnel */}
+          <div className="mt-4 pt-4 border-t border-zinc-800">
+            <p className="text-[10px] text-zinc-500 mb-2">Pipeline Funnel</p>
+            <div className="flex items-center gap-1">
+              {fundMetrics.pipelineByStage.map((s, i) => (
+                <React.Fragment key={s.stage}>
+                  <div className="flex-1 text-center">
+                    <div className={cn('h-6 rounded flex items-center justify-center text-[9px] font-medium text-white', s.color)}>
+                      {s.count}
+                    </div>
+                    <p className="text-[8px] text-zinc-600 mt-0.5 truncate">{s.label}</p>
+                  </div>
+                  {i < fundMetrics.pipelineByStage.length - 1 && (
+                    <span className="text-zinc-700 text-[10px]">→</span>
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
+
+          {/* Sector Distribution */}
+          <div className="mt-4 pt-4 border-t border-zinc-800">
+            <p className="text-[10px] text-zinc-500 mb-2">Sector Distribution</p>
+            <div className="space-y-1.5">
+              {fundMetrics.sectorDistribution.slice(0, 5).map(s => (
+                <div key={s.sector} className="flex items-center gap-2">
+                  <span className="text-[10px] text-zinc-400 w-20 truncate">{s.sector}</span>
+                  <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-violet-500 rounded-full" style={{ width: `${s.percentage}%` }} />
+                  </div>
+                  <span className="text-[10px] text-zinc-500 w-8 text-right">{s.percentage}%</span>
+                </div>
+              ))}
+            </div>
           </div>
         </motion.div>
       </div>

@@ -14,6 +14,10 @@ import { logAction, getAuditLog } from '@/lib/persistence/audit'
 import { findSimilarCompanies } from '@/lib/search/similarity'
 import { addToPipeline, getCompanyStage, PIPELINE_STAGES } from '@/lib/persistence/pipeline'
 import { AskScout } from '@/components/ui/ask-scout'
+import { calculateMomentum, getMomentumColor, getMomentumBg, MomentumResult } from '@/lib/scoring/momentum'
+import { calculateRisk, riskColor, riskBg, RiskResult } from '@/lib/scoring/risk'
+import { getScoreDrift, recordScore, ScoreDrift } from '@/lib/scoring/drift'
+import { DataRoomChecklist } from '@/components/ui/data-room'
 import {
   Company,
   EnrichmentPayload,
@@ -84,7 +88,7 @@ export default function CompanyProfilePage(): React.JSX.Element {
   const [lists, setLists] = useState<CompanyList[]>([])
   const [showListMenu, setShowListMenu] = useState(false)
   const [showScoreBreakdown, setShowScoreBreakdown] = useState(false)
-  const [activeTab, setActiveTab] = useState<'overview' | 'signals' | 'enrichment' | 'score' | 'memo'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'signals' | 'enrichment' | 'score' | 'memo' | 'dataroom'>('overview')
 
   // New feature states
   const [memo, setMemo] = useState<DealMemo | null>(null)
@@ -94,6 +98,9 @@ export default function CompanyProfilePage(): React.JSX.Element {
   const [conflicts, setConflicts] = useState<PortfolioConflict[]>([])
   const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([])
   const [showAudit, setShowAudit] = useState(false)
+  const [momentum, setMomentum] = useState<MomentumResult | null>(null)
+  const [risk, setRisk] = useState<RiskResult | null>(null)
+  const [drift, setDrift] = useState<ScoreDrift | null>(null)
 
   useEffect(() => {
     if (!company) return
@@ -129,6 +136,18 @@ export default function CompanyProfilePage(): React.JSX.Element {
 
     // Audit log
     setAuditEntries(getAuditLog(id, 10))
+
+    // Momentum, Risk, Drift
+    setMomentum(calculateMomentum(company))
+    setRisk(calculateRisk(company, enrichment))
+    setDrift(getScoreDrift(id))
+
+    // Record score for drift tracking
+    if (score) {
+      const dimMap: Record<string, number> = {}
+      score.dimensions.forEach(d => { dimMap[d.key] = d.rawScore })
+      recordScore(id, score.total, dimMap)
+    }
 
     // Record visit (after reading changes)
     setTimeout(() => {
@@ -387,6 +406,23 @@ export default function CompanyProfilePage(): React.JSX.Element {
                         📋 {pipelineLabel}
                       </Badge>
                     )}
+                    {momentum && (
+                      <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full', getMomentumBg(momentum.level), getMomentumColor(momentum.level))}>
+                        {momentum.label}
+                      </span>
+                    )}
+                    {risk && (
+                      <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full', riskBg(risk.totalRisk), riskColor(risk.totalRisk))}>
+                        Risk: {risk.totalRisk}/100
+                      </span>
+                    )}
+                    {drift && drift.direction !== 'stable' && (
+                      <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full',
+                        drift.direction === 'up' ? 'bg-emerald-600/15 text-emerald-400' : 'bg-red-600/15 text-red-400'
+                      )}>
+                        {drift.delta > 0 ? '↑' : '↓'} {Math.abs(drift.delta)} {drift.period}
+                      </span>
+                    )}
                     <span className="text-[10px] text-zinc-600">Founded {company.foundedYear}</span>
                   </div>
                 </div>
@@ -485,13 +521,13 @@ export default function CompanyProfilePage(): React.JSX.Element {
 
         {/* Tabs */}
         <div className="flex items-center gap-1 mb-4 bg-zinc-900 border border-zinc-800 rounded-lg p-1 w-fit">
-          {(['overview', 'signals', 'enrichment', 'score', 'memo'] as const).map((tab) => (
+          {(['overview', 'signals', 'enrichment', 'score', 'memo', 'dataroom'] as const).map((tab) => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               className={cn(
                 'px-3 py-1.5 rounded-md text-xs font-medium transition-all capitalize',
                 activeTab === tab ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'
               )}>
-              {tab}
+              {tab === 'dataroom' ? 'Data Room' : tab}
               {tab === 'enrichment' && enrichment && <span className="ml-1.5 w-1.5 h-1.5 bg-emerald-400 rounded-full inline-block" />}
               {tab === 'memo' && memo && <span className="ml-1.5 w-1.5 h-1.5 bg-blue-400 rounded-full inline-block" />}
             </button>
@@ -913,6 +949,44 @@ export default function CompanyProfilePage(): React.JSX.Element {
                   </div>
                 ))}
               </>
+            )}
+          </div>
+        )}
+
+        {/* DATA ROOM TAB */}
+        {activeTab === 'dataroom' && (
+          <div className="space-y-4">
+            <DataRoomChecklist companyId={company.id} companyName={company.name} />
+
+            {/* Risk Details */}
+            {risk && (
+              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+                <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <Shield className="w-3.5 h-3.5" /> Risk Assessment
+                </h3>
+                <div className="flex items-center gap-3 mb-3">
+                  <span className={cn('text-2xl font-bold', riskColor(risk.totalRisk))}>{risk.totalRisk}</span>
+                  <span className="text-xs text-zinc-500">/100</span>
+                  <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full', riskBg(risk.totalRisk), riskColor(risk.totalRisk))}>
+                    {risk.grade}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {risk.factors.map(f => (
+                    <div key={f.key} className="flex items-start gap-2">
+                      <span className={cn('w-2 h-2 rounded-full mt-1.5 flex-shrink-0',
+                        f.severity === 'high' ? 'bg-red-400' :
+                          f.severity === 'medium' ? 'bg-amber-400' : 'bg-zinc-500'
+                      )} />
+                      <div>
+                        <p className="text-xs text-zinc-300">{f.label}</p>
+                        <p className="text-[10px] text-zinc-500">{f.reason}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[10px] text-zinc-600 mt-3 pt-3 border-t border-zinc-800">{risk.summary}</p>
+              </div>
             )}
           </div>
         )}

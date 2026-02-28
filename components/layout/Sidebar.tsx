@@ -14,6 +14,8 @@ import {
   Kanban,
   Shield,
   FileText,
+  BarChart3,
+  LogIn,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -37,6 +39,13 @@ const NAV_ITEMS = [
     label: 'Pipeline',
     href: '/pipeline',
     icon: Kanban,
+    badge: null,
+    badgeVariant: null,
+  },
+  {
+    label: 'IC View',
+    href: '/ic',
+    icon: BarChart3,
     badge: 'New',
     badgeVariant: 'default' as const,
   },
@@ -72,6 +81,13 @@ const NAV_ITEMS = [
     label: 'Portfolio',
     href: '/portfolio',
     icon: Shield,
+    badge: null,
+    badgeVariant: null,
+  },
+  {
+    label: 'Sign In',
+    href: '/auth/signin',
+    icon: LogIn,
     badge: null,
     badgeVariant: null,
   },
