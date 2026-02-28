@@ -29,22 +29,127 @@
   * {
     box-sizing: border-box;
   }
+
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
   }
+
   ::-webkit-scrollbar {
     width: 4px;
     height: 4px;
   }
+
   ::-webkit-scrollbar-track {
     background: #09090b;
   }
+
   ::-webkit-scrollbar-thumb {
     background: #3f3f46;
     border-radius: 9999px;
   }
+
   ::-webkit-scrollbar-thumb:hover {
     background: #71717a;
+  }
+}
+
+/* ─── GLASSMORPHISM ────────────────────────────────────────────────────────── */
+
+@layer utilities {
+  .glass {
+    background: rgba(9, 9, 11, 0.8);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(63, 63, 70, 0.3);
+  }
+
+  .glass-light {
+    background: rgba(24, 24, 27, 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  .gradient-border {
+    position: relative;
+    background-clip: padding-box;
+    border: 1px solid transparent;
+  }
+
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    margin: -1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(124, 58, 237, 0.05), transparent);
+  }
+
+  .text-gradient {
+    background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 50%, #6d28d9 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .glow-violet {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.15), 0 0 40px rgba(139, 92, 246, 0.05);
+  }
+
+  .glow-emerald {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
+  }
+}
+
+/* ─── ANIMATIONS ───────────────────────────────────────────────────────────── */
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 5px rgba(139, 92, 246, 0.2);
+  }
+
+  50% {
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+  }
+}
+
+@layer utilities {
+  .animate-shimmer {
+    background: linear-gradient(90deg, transparent 0%, rgba(139, 92, 246, 0.08) 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: shimmer 2s ease-in-out infinite;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
   }
 }

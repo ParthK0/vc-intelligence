@@ -46,6 +46,10 @@ export type ConfidenceLevel = 'high' | 'medium' | 'low'
 
 export type EnrichmentStatus = 'pending' | 'success' | 'partial' | 'failed'
 
+export type ConfidenceIndex = 'High' | 'Medium' | 'Low'
+
+export type PipelineStage = 'sourced' | 'intro' | 'partner_review' | 'ic' | 'invested' | 'passed'
+
 // ─── CORE ENTITIES ────────────────────────────────────────────────────────────
 
 export interface Signal {
@@ -68,6 +72,16 @@ export interface Note {
   updatedAt: string
 }
 
+export interface Founder {
+  name: string
+  role: string
+  previousCompany?: string
+  exitHistory?: string
+  linkedinUrl?: string
+  isRepeatFounder: boolean
+  background?: string
+}
+
 export interface Company {
   id: string
   name: string
@@ -85,6 +99,7 @@ export interface Company {
   totalRaised?: number          // in USD
   investorNames: string[]
   founderNames: string[]
+  founders?: Founder[]
   linkedinUrl?: string
   twitterUrl?: string
   githubUrl?: string
@@ -169,6 +184,7 @@ export interface DimensionScore {
 export interface ScoreResult {
   total: number             // 0-100, sum of all weightedScores
   grade: ScoreGrade
+  confidence: ConfidenceIndex
   dimensions: DimensionScore[]
   explanation: string       // human-readable paragraph for analysts
   scoredAt: string
@@ -251,4 +267,97 @@ export interface ScoreResponse {
   success: boolean
   data?: ScoreResult
   error?: string
+}
+
+// ─── DEAL MEMO ────────────────────────────────────────────────────────────────
+
+export interface DealMemo {
+  companyId: string
+  companyName: string
+  generatedAt: string
+  investmentSummary: string
+  problem: string
+  solution: string
+  market: string
+  tractionSignals: string
+  thesisMatch: string
+  risks: string
+  recommendedNextStep: string
+  modelUsed: string
+}
+
+// ─── PIPELINE ─────────────────────────────────────────────────────────────────
+
+export interface PipelineData {
+  sourced: string[]
+  intro: string[]
+  partner_review: string[]
+  ic: string[]
+  invested: string[]
+  passed: string[]
+}
+
+// ─── PORTFOLIO ────────────────────────────────────────────────────────────────
+
+export interface PortfolioCompany {
+  companyId: string
+  addedAt: string
+}
+
+export interface PortfolioConflict {
+  portfolioCompanyId: string
+  portfolioCompanyName: string
+  overlapPercent: number
+  matchingKeywords: string[]
+  matchingSectors: boolean
+}
+
+// ─── VISIT TRACKING ───────────────────────────────────────────────────────────
+
+export interface VisitRecord {
+  companyId: string
+  lastVisitAt: string
+  lastScore: number
+  lastSignalCount: number
+  lastEnrichmentAt?: string
+}
+
+export interface VisitChanges {
+  scoreDelta: number
+  newSignalCount: number
+  wasReEnriched: boolean
+  daysSinceVisit: number
+}
+
+// ─── AUDIT LOG ────────────────────────────────────────────────────────────────
+
+export type AuditAction =
+  | 'score_calculated'
+  | 'enrichment_run'
+  | 'memo_generated'
+  | 'list_modified'
+  | 'pipeline_moved'
+  | 'company_viewed'
+  | 'search_saved'
+
+export interface AuditEntry {
+  id: string
+  action: AuditAction
+  entityType: 'company' | 'list' | 'search' | 'pipeline'
+  entityId: string
+  entityName?: string
+  details: string
+  timestamp: string
+}
+
+// ─── DIGEST ───────────────────────────────────────────────────────────────────
+
+export interface DigestReport {
+  generatedAt: string
+  period: string
+  newCompanies: { sector: string; count: number }[]
+  highScorers: { name: string; score: number; sector: string }[]
+  topSignals: { company: string; signal: string; type: SignalType }[]
+  totalSignals: number
+  avgScore: number
 }

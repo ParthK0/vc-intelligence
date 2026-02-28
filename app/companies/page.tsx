@@ -217,7 +217,7 @@ function CompaniesContent(): React.JSX.Element {
 
         {/* Filter Panel */}
         <CollapsiblePanel isOpen={showFilters}>
-          <motion.div 
+          <motion.div
             className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -323,7 +323,7 @@ function CompaniesContent(): React.JSX.Element {
           </div>
 
           {items.length === 0 ? (
-            <motion.div 
+            <motion.div
               className="py-16 text-center"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -342,7 +342,7 @@ function CompaniesContent(): React.JSX.Element {
               {items.map((company: Company, idx: number) => (
                 <StaggerItem key={company.id}>
                   <motion.div
-                    whileHover={{ 
+                    whileHover={{
                       backgroundColor: 'rgba(39, 39, 42, 0.6)',
                       transition: { duration: 0.15 }
                     }}
@@ -353,7 +353,7 @@ function CompaniesContent(): React.JSX.Element {
                       className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-zinc-800/60 transition-colors group"
                     >
                       <div className="col-span-3 flex items-center gap-3 min-w-0">
-                        <motion.div 
+                        <motion.div
                           className="w-7 h-7 rounded-md bg-zinc-800 border border-zinc-700 flex items-center justify-center flex-shrink-0"
                           whileHover={{ scale: 1.1, borderColor: 'rgb(139, 92, 246)' }}
                           transition={{ duration: 0.15 }}
@@ -397,7 +397,7 @@ function CompaniesContent(): React.JSX.Element {
                           {company.signals.length}
                         </span>
                         {company.signals.some((s) => s.isNew) && (
-                          <motion.span 
+                          <motion.span
                             className="w-1.5 h-1.5 bg-violet-500 rounded-full"
                             animate={{ scale: [1, 1.3, 1], opacity: [1, 0.7, 1] }}
                             transition={{ duration: 2, repeat: Infinity }}
@@ -407,8 +407,8 @@ function CompaniesContent(): React.JSX.Element {
 
                       <div className="col-span-2 flex items-center">
                         <div className="flex items-center gap-2">
-                          <AnimatedScore 
-                            score={company.thesisScore?.total ?? 0} 
+                          <AnimatedScore
+                            score={company.thesisScore?.total ?? 0}
                             size="sm"
                             showLabel={true}
                           />
@@ -416,12 +416,20 @@ function CompaniesContent(): React.JSX.Element {
                             <span className="text-[10px] text-zinc-500 block">
                               {company.thesisScore?.grade}
                             </span>
+                            {company.thesisScore?.confidence && (
+                              <span className={cn('text-[9px] block mt-0.5',
+                                company.thesisScore.confidence === 'High' ? 'text-emerald-500' :
+                                  company.thesisScore.confidence === 'Medium' ? 'text-amber-500' : 'text-zinc-600'
+                              )}>
+                                {company.thesisScore.confidence}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
 
                       <div className="col-span-1 flex items-center">
-                        <motion.span 
+                        <motion.span
                           className="text-[10px] text-violet-400 group-hover:text-violet-300"
                           initial={{ opacity: 0, x: -5 }}
                           whileInView={{ opacity: 1, x: 0 }}
@@ -440,7 +448,7 @@ function CompaniesContent(): React.JSX.Element {
 
         {/* Pagination */}
         {pages > 1 && (
-          <motion.div 
+          <motion.div
             className="flex items-center justify-between"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}

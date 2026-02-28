@@ -11,6 +11,9 @@ import {
   TrendingUp,
   Settings,
   Zap,
+  Kanban,
+  Shield,
+  FileText,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -27,8 +30,15 @@ const NAV_ITEMS = [
     label: 'Companies',
     href: '/companies',
     icon: Building2,
-    badge: '25',
+    badge: '500',
     badgeVariant: 'secondary' as const,
+  },
+  {
+    label: 'Pipeline',
+    href: '/pipeline',
+    icon: Kanban,
+    badge: 'New',
+    badgeVariant: 'default' as const,
   },
   {
     label: 'Lists',
@@ -48,8 +58,22 @@ const NAV_ITEMS = [
     label: 'Signals',
     href: '/signals',
     icon: TrendingUp,
-    badge: 'New',
+    badge: 'Live',
     badgeVariant: 'default' as const,
+  },
+  {
+    label: 'Digest',
+    href: '/digest',
+    icon: FileText,
+    badge: null,
+    badgeVariant: null,
+  },
+  {
+    label: 'Portfolio',
+    href: '/portfolio',
+    icon: Shield,
+    badge: null,
+    badgeVariant: null,
   },
 ]
 
@@ -57,20 +81,20 @@ export function Sidebar(): React.JSX.Element {
   const pathname = usePathname()
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-60 bg-zinc-950 border-r border-zinc-800 flex flex-col z-40">
+    <aside className="fixed left-0 top-0 h-screen w-60 bg-zinc-950/95 backdrop-blur-xl border-r border-zinc-800/60 flex flex-col z-40">
 
       {/* Logo */}
-      <div className="px-5 py-5 border-b border-zinc-800">
+      <div className="px-5 py-5 border-b border-zinc-800/60">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-violet-600 flex items-center justify-center flex-shrink-0">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-violet-600/20">
             <Zap className="w-4 h-4 text-white" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-white leading-none">
+            <p className="text-sm font-bold text-white leading-none tracking-tight">
               Scout
             </p>
             <p className="text-[10px] text-zinc-500 mt-0.5 leading-none">
-              Apex Ventures
+              VC Intelligence Platform
             </p>
           </div>
         </div>
@@ -93,12 +117,15 @@ export function Sidebar(): React.JSX.Element {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex items-center justify-between gap-2.5 px-2.5 py-2 rounded-md text-sm transition-all duration-150 group',
+                'flex items-center justify-between gap-2.5 px-2.5 py-2 rounded-lg text-sm transition-all duration-200 group relative',
                 isActive
                   ? 'bg-violet-600/15 text-violet-400'
                   : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60'
               )}
             >
+              {isActive && (
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-violet-500 rounded-r" />
+              )}
               <div className="flex items-center gap-2.5">
                 <Icon
                   className={cn(
@@ -134,12 +161,15 @@ export function Sidebar(): React.JSX.Element {
           <Link
             href="/thesis"
             className={cn(
-              'flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm transition-all duration-150 group',
+              'flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm transition-all duration-200 group relative',
               pathname === '/thesis'
                 ? 'bg-violet-600/15 text-violet-400'
                 : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60'
             )}
           >
+            {pathname === '/thesis' && (
+              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-violet-500 rounded-r" />
+            )}
             <Settings className="w-4 h-4 text-zinc-500 group-hover:text-zinc-300 flex-shrink-0" />
             <span className="font-medium">Thesis Config</span>
           </Link>
@@ -147,12 +177,12 @@ export function Sidebar(): React.JSX.Element {
       </nav>
 
       {/* Fund badge */}
-      <div className="px-4 py-4 border-t border-zinc-800">
-        <div className="bg-zinc-900 rounded-lg px-3 py-2.5">
+      <div className="px-4 py-4 border-t border-zinc-800/60">
+        <div className="bg-gradient-to-br from-zinc-900 to-zinc-900/50 rounded-xl px-3 py-3 border border-zinc-800/50">
           <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">
             Active Fund
           </p>
-          <p className="text-xs text-zinc-200 font-medium mt-0.5">
+          <p className="text-xs text-zinc-200 font-semibold mt-0.5">
             Apex Ventures
           </p>
           <p className="text-[10px] text-zinc-500 mt-0.5">
